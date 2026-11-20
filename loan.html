@@ -1,1 +1,151 @@
-<!doctype html><html lang="el"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Υπολογιστής δόσης δανείου | SmartMoney Tools</title><meta name="description" content="Εκτίμησε τη σταθερή μηνιαία δόση ενός τοκοχρεολυτικού δανείου."><link rel="stylesheet" href="style.css"></head><body data-tool="loan"><header><a class="brand" href="index.html">Smart<b>Money</b> Tools</a><nav aria-label="Κύρια πλοήγηση"><a href="index.html">Αρχική</a><a href="savings.html">Αποταμίευση</a><a href="compound.html">Σύνθετος τόκος</a><a href="loan.html">Δάνειο</a><a href="budget.html">Προϋπολογισμός</a><a href="percentage.html">Μεταβολή</a></nav></header><main><span class="pill">Δωρεάν εργαλείο</span><h1>Υπολογιστής δόσης δανείου</h1><p class="lead">Εκτίμησε τη σταθερή μηνιαία δόση ενός τοκοχρεολυτικού δανείου.</p><div class="layout"><section class="panel"><h2>Τα στοιχεία σου</h2><label for="principal">Ποσό δανείου (€)</label><input id="principal" type="number" value="10000" min="0.01" max="100000000" step="any" inputmode="decimal"><label for="rate">Ετήσιο ονομαστικό επιτόκιο (%)</label><input id="rate" type="number" value="5" min="0" max="40" step="0.1" inputmode="decimal"><label for="years">Διάρκεια (έτη, σε πλήρεις μήνες)</label><input id="years" type="number" value="5" min="0.01" max="40" step="any" inputmode="decimal"></section><section class="panel"><h2>Αποτελέσματα</h2><div class="metric" aria-live="polite"><small>Εκτιμώμενη μηνιαία δόση</small><strong id="total" data-result>—</strong></div><div class="breakdown"><span>Συνολικές πληρωμές</span><strong id="paid" data-result>—</strong></div><div class="breakdown"><span>Συνολικοί τόκοι</span><strong id="interest" data-result>—</strong></div><p id="error" class="error" role="alert"></p><p class="note">Ενδεικτικοί υπολογισμοί, χωρίς φόρους, έξοδα ή αλλαγές επιτοκίων. Δεν αποτελούν χρηματοοικονομική συμβουλή.</p></section></div><section class="panel info"><h2>Πώς υπολογίζεται;</h2><p>Για σταθερό επιτόκιο r ανά μήνα και n δόσεις, η δόση είναι Κ × r / (1 − (1+r)^−n). Σε μηδενικό επιτόκιο είναι Κ/n. Δεν περιλαμβάνονται προμήθειες, ασφάλιστρα ή άλλες χρεώσεις.</p></section></main><footer>© <span data-year></span> SmartMoney Tools · Εκπαιδευτικό περιεχόμενο · <a href="privacy.html">Απόρρητο</a><a href="about.html">Σχετικά</a></footer><script src="app.js" defer></script></body></html>
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Υπολογιστής Δανείου με Πίνακα Αποπληρωμής | SmartMoney Tools</title>
+<meta name="description" content="Δωρεάν υπολογιστής δανείου: μηνιαία δόση, συνολικοί τόκοι, γράφημα υπολοίπου και αναλυτικό πρόγραμμα αποπληρωμής ανά μήνα.">
+<link rel="canonical" href="https://smartmoney-tools.github.io/smart-money-tools/loan.html">
+<meta name="theme-color" content="#102746">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="el_GR">
+<meta property="og:title" content="Υπολογιστής Δανείου | SmartMoney Tools">
+<meta property="og:description" content="Υπολόγισε τη μηνιαία δόση και δες το πρόγραμμα αποπληρωμής δανείου.">
+<link rel="stylesheet" href="style.css">
+<style>
+.field-help{font-size:12px;color:#65758b;line-height:1.5;margin:6px 0 0}
+.loan-actions{margin-top:22px}
+.loan-button{border:1px solid #1766a5;background:#1766a5;color:white;font:650 14px system-ui,sans-serif;padding:11px 16px;border-radius:10px;cursor:pointer}
+.loan-button:hover{background:#125586}
+.loan-button:focus-visible,summary:focus-visible{outline:3px solid #1974b8;outline-offset:3px}
+.loan-chart-panel{margin-top:24px}
+.loan-chart-scroll{overflow-x:auto;border:1px solid #e6edf4;border-radius:12px;background:#fbfdff}
+.loan-chart{display:block;width:100%;min-width:560px;height:auto}
+.loan-legend{display:flex;flex-wrap:wrap;gap:16px;margin:12px 0;color:#52637b;font-size:14px}
+.loan-dot{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:7px}
+.loan-table-wrap{overflow:auto;max-height:460px;margin-top:14px}
+.loan-table{border-collapse:collapse;width:100%;min-width:640px;text-align:right;font-size:13px;font-variant-numeric:tabular-nums}
+.loan-table th,.loan-table td{padding:10px;border-bottom:1px solid #e6edf4}
+.loan-table th{position:sticky;top:0;background:#f3f8fc;color:#243b53}
+.loan-table th:first-child,.loan-table td:first-child{text-align:left}
+.loan-disclosure{border:1px solid #e1e8f0;border-radius:12px;padding:14px 16px;margin-top:18px;background:white}
+.loan-disclosure summary{cursor:pointer;font-weight:700}
+.loan-faq h3{font-size:17px;margin-bottom:0}
+.loan-faq p{margin-top:7px}
+.loan-note{font-size:12px}
+@media(max-width:740px){.loan-button{width:100%}}
+</style>
+</head>
+<body>
+<header><a class="brand" href="index.html">Smart<b>Money</b> Tools</a><nav aria-label="Κύρια πλοήγηση">
+<a href="index.html">Αρχική</a><a href="savings.html">Αποταμίευση</a><a href="compound.html">Σύνθετος τόκος</a><a href="loan.html" aria-current="page">Δάνειο</a><a href="budget.html">Προϋπολογισμός</a><a href="percentage.html">Μεταβολή</a>
+</nav></header>
+<main>
+<span class="pill">Δωρεάν οικονομικό εργαλείο</span>
+<h1>Υπολογιστής δόσης δανείου</h1>
+<p class="lead">Υπολόγισε την εκτιμώμενη σταθερή μηνιαία δόση, δες πόσο θα πληρώσεις συνολικά σε τόκους και παρακολούθησε την αποπληρωμή του δανείου σε γράφημα και αναλυτικό πίνακα.</p>
+<div class="layout">
+<section class="panel" aria-labelledby="inputs-title">
+<h2 id="inputs-title">Τα στοιχεία σου</h2>
+<label for="principal">Ποσό δανείου (€)</label>
+<input id="principal" type="number" value="10000" min="0.01" max="100000000" step="any" inputmode="decimal">
+<p class="field-help">Το ποσό που δανείζεσαι, χωρίς τυχόν έξοδα.</p>
+<label for="rate">Ετήσιο ονομαστικό επιτόκιο (%)</label>
+<input id="rate" type="number" value="5" min="0" max="40" step="any" inputmode="decimal">
+<p class="field-help">Υποθέτουμε σταθερό επιτόκιο σε όλη τη διάρκεια.</p>
+<label for="years">Διάρκεια (έτη)</label>
+<input id="years" type="number" value="5" min="0.08333333333333333" max="40" step="any" inputmode="decimal">
+<p class="field-help">Από 1 μήνα έως 40 χρόνια. Π.χ. 1,5 έτη = 18 μήνες.</p>
+<div class="loan-actions"><button type="button" id="reset" class="loan-button">Επαναφορά παραδείγματος</button></div>
+</section>
+<section class="panel" aria-labelledby="results-title">
+<h2 id="results-title">Αποτελέσματα</h2>
+<div class="metric" aria-live="polite" aria-atomic="true"><small>Εκτιμώμενη μηνιαία δόση</small><strong id="payment">—</strong></div>
+<div class="breakdown"><span>Συνολικές πληρωμές</span><strong id="paid">—</strong></div>
+<div class="breakdown"><span>Συνολικοί τόκοι</span><strong id="interest">—</strong></div>
+<div class="breakdown"><span>Αρχικό ποσό δανείου</span><strong id="original">—</strong></div>
+<div class="breakdown"><span>Αριθμός μηνιαίων δόσεων</span><strong id="months">—</strong></div>
+<p id="error" class="error" role="alert"></p>
+<p class="note">Ενδεικτικός μαθηματικός υπολογισμός με σταθερό ονομαστικό επιτόκιο και ισόποσες μηνιαίες δόσεις. Δεν περιλαμβάνονται έξοδα φακέλου, ασφάλιστρα, προμήθειες, φόροι, μεταβολές επιτοκίου ή άλλες χρεώσεις. Δεν είναι τραπεζική προσφορά.</p>
+</section>
+</div>
+<section class="panel loan-chart-panel" aria-labelledby="chart-title">
+<h2 id="chart-title">Πώς μειώνεται το υπόλοιπο του δανείου;</h2>
+<p>Το γράφημα δείχνει το ανεξόφλητο κεφάλαιο κατά τη διάρκεια του δανείου. Οι τόκοι κάθε μήνα υπολογίζονται στο υπόλοιπο που απομένει.</p>
+<div class="loan-legend" aria-hidden="true"><span><i class="loan-dot" style="background:#2563a6"></i>Υπόλοιπο δανείου</span><span><i class="loan-dot" style="background:#13a182"></i>Κεφάλαιο που αποπληρώθηκε</span></div>
+<div class="loan-chart-scroll"><svg id="loan-chart" class="loan-chart" viewBox="0 0 760 315" role="img" aria-label="Γράφημα εξέλιξης υπολοίπου δανείου"></svg><p id="chart-empty" hidden>Συμπλήρωσε έγκυρες τιμές για να εμφανιστεί το γράφημα.</p></div>
+<p class="loan-note">Σε μικρές οθόνες μπορείς να σύρεις το γράφημα οριζόντια. Οι αριθμοί είναι προσεγγιστικοί και παρουσιάζονται στρογγυλοποιημένοι.</p>
+<details class="loan-disclosure"><summary>Δες τον αναλυτικό πίνακα αποπληρωμής ανά μήνα</summary>
+<p class="loan-note">Κάθε γραμμή περιλαμβάνει την πληρωμή, το μέρος που καλύπτει τόκους, το κεφάλαιο που αποπληρώνεται και το υπόλοιπο.</p>
+<div class="loan-table-wrap"><table class="loan-table"><thead><tr><th scope="col">Μήνας</th><th scope="col">Δόση</th><th scope="col">Τόκοι</th><th scope="col">Κεφάλαιο</th><th scope="col">Υπόλοιπο</th></tr></thead><tbody id="schedule"></tbody></table></div>
+</details>
+</section>
+<section class="panel info">
+<h2>Πώς υπολογίζεται η δόση δανείου;</h2>
+<p>Για ποσό δανείου <strong>Κ</strong>, μηνιαίο επιτόκιο <strong>r</strong> και <strong>n</strong> μηνιαίες δόσεις, η σταθερή δόση ισούται με <strong>Κ × r / (1 − (1+r)<sup>−n</sup>)</strong>. Το μηνιαίο επιτόκιο είναι το ονομαστικό ετήσιο επιτόκιο διαιρεμένο διά 12. Αν το επιτόκιο είναι 0%, η δόση είναι Κ / n.</p>
+<p>Στην αρχή μεγαλύτερο μέρος της δόσης καλύπτει τόκους. Καθώς μειώνεται το υπόλοιπο, αυξάνεται το μέρος της δόσης που αποπληρώνει κεφάλαιο.</p>
+<p>Το εργαλείο χρησιμοποιεί μαθηματική ακρίβεια στους ενδιάμεσους υπολογισμούς και στρογγυλοποιεί μόνο όσα εμφανίζει. Στην πραγματική αποπληρωμή, οι κανόνες στρογγυλοποίησης της τράπεζας μπορεί να οδηγήσουν σε μικρές διαφορές.</p>
+</section>
+<section class="panel info loan-faq">
+<h2>Συχνές ερωτήσεις για τα δάνεια</h2>
+<h3>Τι σημαίνει σταθερή μηνιαία δόση;</h3><p>Σημαίνει ότι στο υποθετικό μοντέλο η συνολική δόση παραμένει ίδια κάθε μήνα, παρότι αλλάζει η αναλογία τόκων και κεφαλαίου.</p>
+<h3>Περιλαμβάνει ο υπολογιστής το πραγματικό συνολικό κόστος του δανείου;</h3><p>Όχι. Δεν υπολογίζει το συνολικό ετήσιο πραγματικό ποσοστό επιβάρυνσης (ΣΕΠΠΕ), ασφάλειες, προμήθειες ή άλλες συμβατικές χρεώσεις.</p>
+<h3>Τι γίνεται αν το επιτόκιο αλλάξει;</h3><p>Αυτό το εργαλείο υποθέτει σταθερό επιτόκιο. Σε κυμαινόμενο επιτόκιο η δόση και οι τόκοι μπορεί να αλλάξουν.</p>
+<h3>Αποθηκεύονται τα στοιχεία μου;</h3><p>Ο υπολογισμός γίνεται τοπικά στον φυλλομετρητή σου. Αυτή η σελίδα δεν αποστέλλει τα ποσά σε διακομιστή για τον υπολογισμό.</p>
+</section>
+</main>
+<footer>© <span id="footer-year"></span> SmartMoney Tools · Εκπαιδευτικό περιεχόμενο</footer>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const eur=new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR'});
+const fmt=new Intl.NumberFormat('el-GR',{maximumFractionDigits:2});
+const ns='http://www.w3.org/2000/svg';
+$('footer-year').textContent=new Date().getFullYear();
+function node(tag,attrs,text){const e=document.createElementNS(ns,tag);Object.entries(attrs||{}).forEach(([k,v])=>e.setAttribute(k,String(v)));if(text!==undefined)e.textContent=text;return e;}
+function clear(msg){['payment','paid','interest','original','months'].forEach(id=>$(id).textContent='—');$('error').textContent=msg;$('loan-chart').replaceChildren();$('loan-chart').hidden=true;$('chart-empty').hidden=false;$('schedule').replaceChildren();}
+function draw(points,principal,months){
+ const svg=$('loan-chart');svg.replaceChildren();svg.hidden=false;$('chart-empty').hidden=true;
+ const L=95,R=735,T=22,B=263;const x=m=>L+(R-L)*m/months;const y=v=>B-(B-T)*v/(principal*1.08);
+ for(let k=0;k<=4;k++){const value=principal*k/4;const py=y(value);svg.appendChild(node('line',{x1:L,y1:py,x2:R,y2:py,stroke:'#dfebf3'}));svg.appendChild(node('text',{x:L-12,y:py+4,'text-anchor':'end',fill:'#64748b','font-size':12},fmt.format(value)+' €'));}
+ for(let k=0;k<=4;k++){const m=months*k/4;svg.appendChild(node('text',{x:x(m),y:289,'text-anchor':'middle',fill:'#64748b','font-size':12},fmt.format(m/12)));}
+ svg.appendChild(node('text',{x:(L+R)/2,y:308,'text-anchor':'middle',fill:'#52637b','font-size':12},'Χρόνια'));
+ const path=key=>points.map((p,i)=>(i?'L':'M')+x(p.m).toFixed(2)+','+y(p[key]).toFixed(2)).join(' ');
+ svg.appendChild(node('path',{d:path('repaid'),fill:'none',stroke:'#13a182','stroke-width':3,'stroke-linejoin':'round'}));
+ svg.appendChild(node('path',{d:path('balance'),fill:'none',stroke:'#2563a6','stroke-width':3,'stroke-linejoin':'round'}));
+}
+function calculate(){
+ const ids=['principal','rate','years'];const data={};
+ for(const id of ids){const field=$(id);if(field.value.trim()===''){clear('Συμπλήρωσε όλα τα πεδία.');return;}const v=Number(field.value);if(!Number.isFinite(v)||field.validity.badInput){clear('Χρησιμοποίησε έγκυρους αριθμούς.');return;}data[id]=v;}
+ const {principal,rate,years}=data;const months=Math.round(years*12);
+ if(principal<=0||principal>1e8||rate<0||rate>40||years<=0||years>40||Math.abs(years*12-months)>1e-7||months<1){clear('Δώσε ποσό από 0,01 έως 100.000.000 €, επιτόκιο 0–40% και διάρκεια από 1 μήνα έως 40 έτη σε πλήρεις μήνες.');return;}
+ const r=rate/1200;const payment=r===0?principal/months:principal*r/(-Math.expm1(-months*Math.log1p(r)));
+ if(!Number.isFinite(payment)){clear('Αδύνατος ο υπολογισμός για αυτές τις τιμές.');return;}
+ let balance=principal,totalInterest=0,totalPaid=0;
+ const points=[{m:0,balance:principal,repaid:0}],rows=document.createDocumentFragment();
+ for(let m=1;m<=months;m++){
+  const interest=balance*r;
+  const capital=m===months?balance:Math.min(balance,Math.max(0,payment-interest));
+  const installment=capital+interest;
+  balance=Math.max(0,balance-capital);totalInterest+=interest;totalPaid+=installment;
+  const tr=document.createElement('tr');
+  [String(m),eur.format(installment),eur.format(interest),eur.format(capital),eur.format(balance)].forEach(value=>{const td=document.createElement('td');td.textContent=value;tr.appendChild(td);});rows.appendChild(tr);
+  if(m%12===0||m===months)points.push({m,balance,repaid:principal-balance});
+ }
+ $('payment').textContent=eur.format(payment);
+ $('paid').textContent=eur.format(totalPaid);
+ $('interest').textContent=eur.format(totalInterest);
+ $('original').textContent=eur.format(principal);
+ $('months').textContent=fmt.format(months);
+ $('error').textContent='';
+ $('schedule').replaceChildren(rows);
+ draw(points,principal,months);
+}
+['principal','rate','years'].forEach(id=>$(id).addEventListener('input',calculate));
+$('reset').addEventListener('click',()=>{$('principal').value='10000';$('rate').value='5';$('years').value='5';calculate();});
+calculate();
+})();
+</script>
+</body>
+</html>
