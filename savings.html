@@ -1,1 +1,281 @@
-<!doctype html><html lang="el"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Υπολογιστής αποταμίευσης | SmartMoney Tools</title><meta name="description" content="Υπολόγισε το ποσό που μπορείς να συγκεντρώσεις με μηνιαίες καταθέσεις."><link rel="stylesheet" href="style.css"></head><body data-tool="savings"><header><a class="brand" href="index.html">Smart<b>Money</b> Tools</a><nav aria-label="Κύρια πλοήγηση"><a href="index.html">Αρχική</a><a href="savings.html">Αποταμίευση</a><a href="compound.html">Σύνθετος τόκος</a><a href="loan.html">Δάνειο</a><a href="budget.html">Προϋπολογισμός</a><a href="percentage.html">Μεταβολή</a></nav></header><main><span class="pill">Δωρεάν εργαλείο</span><h1>Υπολογιστής αποταμίευσης</h1><p class="lead">Υπολόγισε το ποσό που μπορείς να συγκεντρώσεις με μηνιαίες καταθέσεις.</p><div class="layout"><section class="panel"><h2>Τα στοιχεία σου</h2><label for="initial">Αρχικό ποσό (€)</label><input id="initial" type="number" value="500" min="0" max="100000000" step="any" inputmode="decimal"><label for="monthly">Μηνιαία αποταμίευση (€)</label><input id="monthly" type="number" value="100" min="0" max="100000000" step="any" inputmode="decimal"><label for="years">Διάρκεια (έτη, σε πλήρεις μήνες)</label><input id="years" type="number" value="5" min="1" max="60" step="any" inputmode="decimal"><label for="rate">Υποθετικό ετήσιο επιτόκιο (%)</label><input id="rate" type="number" value="2" min="0" max="30" step="0.1" inputmode="decimal"></section><section class="panel"><h2>Αποτελέσματα</h2><div class="metric" aria-live="polite"><small>Τελικό ποσό</small><strong id="total" data-result>—</strong></div><div class="breakdown"><span>Συνολικές καταθέσεις</span><strong id="deposits" data-result>—</strong></div><div class="breakdown"><span>Υποθετικοί τόκοι</span><strong id="interest" data-result>—</strong></div><div class="breakdown"><span>Μήνες</span><strong id="months" data-result>—</strong></div><p id="error" class="error" role="alert"></p><p class="note">Ενδεικτικοί υπολογισμοί, χωρίς φόρους, έξοδα ή αλλαγές επιτοκίων. Δεν αποτελούν χρηματοοικονομική συμβουλή.</p></section></div><section class="panel info"><h2>Πώς υπολογίζεται;</h2><p>Κάθε μήνα υπολογίζεται τόκος στο συσσωρευμένο υπόλοιπο και μετά προστίθεται η μηνιαία κατάθεση. Υποθέτουμε σταθερό ονομαστικό ετήσιο επιτόκιο και μηνιαίο ανατοκισμό.</p></section></main><footer>© <span data-year></span> SmartMoney Tools · Εκπαιδευτικό περιεχόμενο · <a href="privacy.html">Απόρρητο</a><a href="about.html">Σχετικά</a></footer><script src="app.js" defer></script></body></html>
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Υπολογιστής Αποταμίευσης με Γράφημα | SmartMoney Tools</title>
+  <meta name="description" content="Δωρεάν υπολογιστής αποταμίευσης: δες πόσα χρήματα θα συγκεντρώσεις με μηνιαίες καταθέσεις, επιτόκιο, διαδραστικό γράφημα και αναλυτικό πίνακα ανά έτος.">
+  <link rel="canonical" href="https://smartmoney-tools.github.io/smart-money-tools/savings.html">
+  <meta name="theme-color" content="#102746">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="el_GR">
+  <meta property="og:title" content="Υπολογιστής Αποταμίευσης | SmartMoney Tools">
+  <meta property="og:description" content="Δες την πορεία των αποταμιεύσεών σου με δωρεάν γράφημα και αναλυτικό πίνακα.">
+  <meta property="og:url" content="https://smartmoney-tools.github.io/smart-money-tools/savings.html">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Όλα τα πρόσθετα στυλ αφορούν μόνο τον υπολογιστή αποταμίευσης. */
+    .savings-intro {max-width:820px}
+    .field-help {font-size:12px;color:#65758b;line-height:1.45;margin:6px 0 0}
+    .savings-actions {display:flex;gap:12px;flex-wrap:wrap;margin-top:22px;align-items:center}
+    .savings-button {appearance:none;border:1px solid #1766a5;background:#1766a5;color:white;font:650 14px system-ui,-apple-system,sans-serif;padding:11px 16px;border-radius:10px;cursor:pointer}
+    .savings-button:hover {background:#125586}
+    .savings-button:focus-visible, summary:focus-visible {outline:3px solid #1974b8;outline-offset:3px}
+    .savings-chart-panel {margin-top:24px}
+    .savings-chart-panel h2 {margin-bottom:6px}
+    .savings-legend {display:flex;flex-wrap:wrap;gap:18px;margin:14px 0 8px;font-size:14px;color:#52637b}
+    .savings-legend span {display:inline-flex;align-items:center;gap:7px}
+    .savings-dot {width:11px;height:11px;display:inline-block;border-radius:3px}
+    .savings-dot-deposits {background:#2563a6}
+    .savings-dot-interest {background:#13a182}
+    .savings-chart-scroll {overflow-x:auto;max-width:100%;border:1px solid #e6edf4;border-radius:12px;background:#fbfdff}
+    .savings-chart {display:block;width:100%;min-width:560px;height:auto}
+    .savings-chart[hidden] {display:none}
+    .savings-chart-note {font-size:12px;margin:10px 0 0}
+    .savings-chart-empty {padding:24px;color:#64748b}
+    .savings-table-wrap {overflow-x:auto;max-width:100%;margin-top:14px}
+    .savings-table {width:100%;border-collapse:collapse;text-align:right;font-size:14px;font-variant-numeric:tabular-nums;min-width:580px}
+    .savings-table th,.savings-table td {padding:12px 10px;border-bottom:1px solid #e6edf4}
+    .savings-table th {background:#f3f8fc;color:#243b53;font-weight:700}
+    .savings-table th:first-child,.savings-table td:first-child {text-align:left}
+    .savings-table tbody tr:last-child {font-weight:700}
+    .savings-disclosure {border:1px solid #e1e8f0;border-radius:12px;padding:14px 16px;margin-top:18px;background:white}
+    .savings-disclosure summary {cursor:pointer;font-weight:700;color:#15233b}
+    .savings-disclosure p {margin-bottom:0}
+    .savings-disclosure ul {line-height:1.75;color:#52637b;padding-left:22px}
+    .savings-faq h3 {font-size:17px;margin-bottom:0}
+    .savings-faq p {margin-top:7px}
+    .savings-muted {color:#64748b}
+    @media(max-width:740px) { .savings-chart-panel {margin-top:18px} .savings-button {width:100%} }
+  </style>
+</head>
+<body data-tool="savings">
+  <header>
+    <a class="brand" href="index.html">Smart<b>Money</b> Tools</a>
+    <nav aria-label="Κύρια πλοήγηση">
+      <a href="index.html">Αρχική</a>
+      <a href="savings.html" aria-current="page">Αποταμίευση</a>
+      <a href="compound.html">Σύνθετος τόκος</a>
+      <a href="loan.html">Δάνειο</a>
+      <a href="budget.html">Προϋπολογισμός</a>
+      <a href="percentage.html">Μεταβολή</a>
+    </nav>
+  </header>
+  <main>
+    <span class="pill">Δωρεάν οικονομικό εργαλείο</span>
+    <h1>Υπολογιστής αποταμίευσης</h1>
+    <p class="lead savings-intro">Πόσα χρήματα μπορείς να συγκεντρώσεις; Συμπλήρωσε το αρχικό ποσό, τη μηνιαία αποταμίευση, τη διάρκεια και ένα <strong>υποθετικό</strong> επιτόκιο. Δες άμεσα το αποτέλεσμα, την εξέλιξη στον χρόνο και έναν πίνακα ανά έτος.</p>
+
+    <div class="layout">
+      <section class="panel" aria-labelledby="inputs-title">
+        <h2 id="inputs-title">Τα στοιχεία σου</h2>
+        <label for="initial">Αρχικό ποσό (€)</label>
+        <input id="initial" type="number" value="500" min="0" max="100000000" step="any" inputmode="decimal" autocomplete="off">
+        <p class="field-help">Τα χρήματα που έχεις ήδη αποταμιεύσει.</p>
+
+        <label for="monthly">Μηνιαία αποταμίευση (€)</label>
+        <input id="monthly" type="number" value="100" min="0" max="100000000" step="any" inputmode="decimal" autocomplete="off">
+        <p class="field-help">Η κατάθεση γίνεται στο τέλος κάθε μήνα.</p>
+
+        <label for="years">Διάρκεια (έτη)</label>
+        <input id="years" type="number" value="5" min="0.08333333333333333" max="60" step="any" inputmode="decimal" autocomplete="off">
+        <p class="field-help">Από 1 μήνα έως 60 χρόνια. Η διάρκεια πρέπει να αντιστοιχεί σε πλήρεις μήνες (π.χ. 1,5 έτη = 18 μήνες).</p>
+
+        <label for="rate">Υποθετικό ετήσιο επιτόκιο (%)</label>
+        <input id="rate" type="number" value="2" min="0" max="30" step="any" inputmode="decimal" autocomplete="off">
+        <p class="field-help">Σταθερό ονομαστικό ετήσιο επιτόκιο με μηνιαίο ανατοκισμό. Δεν αποτελεί πρόβλεψη απόδοσης.</p>
+
+        <div class="savings-actions">
+          <button id="reset-example" class="savings-button" type="button">Επαναφορά παραδείγματος</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="results-title">
+        <h2 id="results-title">Αποτελέσματα</h2>
+        <div class="metric" aria-live="polite" aria-atomic="true">
+          <small>Εκτιμώμενο τελικό ποσό</small>
+          <strong id="total" data-result>—</strong>
+        </div>
+        <div class="breakdown"><span>Συνολικές καταθέσεις</span><strong id="deposits" data-result>—</strong></div>
+        <div class="breakdown"><span>Υποθετικοί τόκοι</span><strong id="interest" data-result>—</strong></div>
+        <div class="breakdown"><span>Διάρκεια σε μήνες</span><strong id="months" data-result>—</strong></div>
+        <p id="error" class="error" role="alert"></p>
+        <p class="note">Ενδεικτικός υπολογισμός χωρίς φόρους, έξοδα, πληθωρισμό ή μεταβολές επιτοκίων. Δεν αποτελεί χρηματοοικονομική συμβουλή.</p>
+      </section>
+    </div>
+
+    <section class="panel savings-chart-panel" aria-labelledby="chart-title">
+      <h2 id="chart-title">Πώς αυξάνεται η αποταμίευσή σου</h2>
+      <p>Το γράφημα διαχωρίζει τα χρήματα που καταθέτεις από τους υποθετικούς τόκους που προκύπτουν με την πάροδο του χρόνου.</p>
+      <div class="savings-legend" aria-hidden="true">
+        <span><i class="savings-dot savings-dot-deposits"></i>Καταθέσεις</span>
+        <span><i class="savings-dot savings-dot-interest"></i>Επιπλέον τόκοι</span>
+      </div>
+      <div class="savings-chart-scroll">
+        <svg id="savings-chart" class="savings-chart" viewBox="0 0 760 315" role="img" aria-label="Γράφημα εξέλιξης αποταμίευσης ανά έτος"></svg>
+        <p id="chart-empty" class="savings-chart-empty" hidden>Συμπλήρωσε έγκυρες τιμές για να εμφανιστεί το γράφημα.</p>
+      </div>
+      <p class="savings-chart-note">Οι τιμές είναι ονομαστικές, πριν από τυχόν φόρους ή έξοδα. Σε μικρές οθόνες μπορείς να σύρεις το γράφημα οριζόντια.</p>
+
+      <details class="savings-disclosure" id="table-details">
+        <summary>Δες τον αναλυτικό πίνακα ανά έτος</summary>
+        <div class="savings-table-wrap">
+          <table class="savings-table">
+            <caption class="savings-muted" style="text-align:left;padding:12px 0">Εξέλιξη καταθέσεων, τόκων και συνολικού υπολοίπου. Εμφανίζεται και το τελευταίο διάστημα αν δεν είναι πλήρες έτος.</caption>
+            <thead><tr><th scope="col">Χρόνος</th><th scope="col">Καταθέσεις</th><th scope="col">Τόκοι</th><th scope="col">Σύνολο</th></tr></thead>
+            <tbody id="savings-table-body"></tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+
+    <section class="panel info" aria-labelledby="method-title">
+      <h2 id="method-title">Πώς γίνεται ο υπολογισμός;</h2>
+      <p>Ξεκινάμε από το αρχικό ποσό. Στο τέλος κάθε μήνα εφαρμόζεται ο μηνιαίος τόκος στο υπάρχον υπόλοιπο και έπειτα προστίθεται η νέα μηνιαία κατάθεση. Ο μηνιαίος συντελεστής ισούται με το ονομαστικό ετήσιο επιτόκιο διαιρεμένο με 12.</p>
+      <p>Για παράδειγμα, με <strong>500 € αρχικό ποσό</strong>, <strong>100 € τον μήνα</strong>, <strong>5 έτη</strong> και <strong>2% ετήσιο ονομαστικό επιτόκιο</strong>, οι καταθέσεις φτάνουν τα 6.500 € και το υποθετικό τελικό ποσό είναι περίπου <strong>6.857,28 €</strong>. Η διαφορά, περίπου 357,28 €, προκύπτει από τον ανατοκισμό.</p>
+      <p>Με επιτόκιο 0%, το τελικό ποσό ισούται ακριβώς με το αρχικό κεφάλαιο συν το σύνολο των μηνιαίων καταθέσεων.</p>
+    </section>
+
+    <section class="panel info savings-faq" aria-labelledby="faq-title">
+      <h2 id="faq-title">Συχνές ερωτήσεις</h2>
+      <h3>Η αποταμίευση έχει πάντα τόκο;</h3>
+      <p>Όχι. Το επιτόκιο είναι μια υποθετική παράμετρος του εργαλείου. Για αποταμίευση χωρίς τόκο βάλε 0%.</p>
+      <h3>Οι μηνιαίες καταθέσεις γίνονται στην αρχή ή στο τέλος του μήνα;</h3>
+      <p>Στο τέλος του μήνα. Έτσι η πρώτη μηνιαία κατάθεση δεν αποδίδει τόκο κατά τον πρώτο μήνα.</p>
+      <h3>Το ποσό που εμφανίζεται είναι εγγυημένο;</h3>
+      <p>Όχι. Ο υπολογισμός υποθέτει σταθερό επιτόκιο και δεν περιλαμβάνει φόρους, τραπεζικά έξοδα, πληθωρισμό ή αλλαγές στους όρους ενός πραγματικού προϊόντος.</p>
+      <h3>Αποθηκεύονται τα ποσά που πληκτρολογώ;</h3>
+      <p>Ο συγκεκριμένος υπολογιστής εκτελεί τις πράξεις μέσα στο πρόγραμμα περιήγησής σου, χωρίς να αποστέλλει τα ποσά σε διακομιστή για τον υπολογισμό.</p>
+    </section>
+  </main>
+
+  <footer>© <span id="footer-year"></span> SmartMoney Tools · Εκπαιδευτικό περιεχόμενο</footer>
+
+  <script>
+  (function () {
+    'use strict';
+    const euro = new Intl.NumberFormat('el-GR', {style: 'currency', currency: 'EUR'});
+    const number = new Intl.NumberFormat('el-GR', {maximumFractionDigits: 2});
+    const $ = id => document.getElementById(id);
+    const ids = ['initial', 'monthly', 'years', 'rate'];
+    const svgNS = 'http://www.w3.org/2000/svg';
+    $('footer-year').textContent = new Date().getFullYear();
+
+    function showResult(id, value, type) {
+      $(id).textContent = Number.isFinite(value)
+        ? (type === 'count' ? number.format(value) : euro.format(value)) : '—';
+    }
+    function clearResults(message) {
+      ['total', 'deposits', 'interest', 'months'].forEach(id => $(id).textContent = '—');
+      $('error').textContent = message;
+      $('savings-chart').replaceChildren();
+      $('savings-chart').hidden = true;
+      $('chart-empty').hidden = false;
+      $('savings-table-body').replaceChildren();
+    }
+    function readValues() {
+      const data = {};
+      for (const id of ids) {
+        const field = $(id);
+        if (field.value.trim() === '') return {error: 'Συμπλήρωσε όλα τα πεδία για να εμφανιστεί το αποτέλεσμα.'};
+        const value = Number(field.value);
+        if (!Number.isFinite(value) || field.validity.badInput) return {error: 'Πληκτρολόγησε έγκυρους αριθμούς σε όλα τα πεδία.'};
+        data[id] = value;
+      }
+      const months = data.years * 12;
+      if (data.initial < 0 || data.initial > 1e8 || data.monthly < 0 || data.monthly > 1e8 || data.rate < 0 || data.rate > 30 || data.years <= 0 || data.years > 60 || !Number.isInteger(months) || months < 1) {
+        return {error: 'Δώσε ποσά από 0 έως 100.000.000 €, επιτόκιο 0–30% και διάρκεια από 1 μήνα έως 60 έτη σε πλήρεις μήνες.'};
+      }
+      return {data, months};
+    }
+    function svgElement(tag, attrs, text) {
+      const el = document.createElementNS(svgNS, tag);
+      for (const [name, value] of Object.entries(attrs || {})) el.setAttribute(name, String(value));
+      if (text !== undefined) el.textContent = text;
+      return el;
+    }
+    function drawChart(points, durationMonths) {
+      const chart = $('savings-chart');
+      chart.replaceChildren();
+      chart.hidden = false;
+      $('chart-empty').hidden = true;
+      const left = 88, right = 735, top = 22, bottom = 266;
+      const maxValue = Math.max(1, ...points.map(p => p.balance));
+      const limit = maxValue * 1.08;
+      const x = month => left + (right - left) * month / durationMonths;
+      const y = value => bottom - (bottom - top) * value / limit;
+      for (let i = 0; i <= 4; i++) {
+        const val = limit * i / 4;
+        const py = y(val);
+        chart.appendChild(svgElement('line', {x1: left, y1: py, x2: right, y2: py, stroke: '#dfebf3', 'stroke-width': 1}));
+        chart.appendChild(svgElement('text', {x: left - 10, y: py + 4, 'text-anchor': 'end', fill: '#64748b', 'font-size': 12}, number.format(val) + ' €'));
+      }
+      for (let i = 0; i <= 4; i++) {
+        const month = durationMonths * i / 4;
+        const px = x(month);
+        const label = i === 0 ? '0' : number.format(month / 12);
+        chart.appendChild(svgElement('text', {x: px, y: 288, 'text-anchor': 'middle', fill: '#64748b', 'font-size': 12}, label));
+      }
+      chart.appendChild(svgElement('text', {x: (left + right) / 2, y: 308, 'text-anchor': 'middle', fill: '#52637b', 'font-size': 12}, 'Χρόνια'));
+      const toPath = (array, key) => array.map((p, i) => (i === 0 ? 'M' : 'L') + x(p.month).toFixed(2) + ',' + y(p[key]).toFixed(2)).join(' ');
+      const depositsPath = toPath(points, 'deposits');
+      const totalPath = toPath(points, 'balance');
+      const underDeposits = depositsPath + ' L' + x(durationMonths).toFixed(2) + ',' + bottom + ' L' + left + ',' + bottom + ' Z';
+      const interestArea = totalPath + ' ' + points.slice().reverse().map(p => 'L' + x(p.month).toFixed(2) + ',' + y(p.deposits).toFixed(2)).join(' ') + ' Z';
+      chart.appendChild(svgElement('path', {d: underDeposits, fill: '#dbeafe'}));
+      chart.appendChild(svgElement('path', {d: interestArea, fill: '#baf0e1'}));
+      chart.appendChild(svgElement('path', {d: depositsPath, fill: 'none', stroke: '#2563a6', 'stroke-width': 3, 'stroke-linejoin': 'round'}));
+      chart.appendChild(svgElement('path', {d: totalPath, fill: 'none', stroke: '#0f846b', 'stroke-width': 3, 'stroke-linejoin': 'round'}));
+      const final = points[points.length - 1];
+      chart.setAttribute('aria-label', 'Εξέλιξη αποταμίευσης από ' + euro.format(points[0].balance) + ' έως ' + euro.format(final.balance) + ' σε ' + number.format(durationMonths / 12) + ' έτη. Αναλυτικές τιμές στον πίνακα.');
+    }
+    function fillTable(points) {
+      const tbody = $('savings-table-body');
+      tbody.replaceChildren();
+      for (const point of points) {
+        const tr = document.createElement('tr');
+        const time = point.month === 0 ? 'Αρχή' : point.month % 12 === 0 ? number.format(point.month / 12) + ' έτη' : number.format(point.month) + ' μήνες';
+        const values = [time, euro.format(point.deposits), euro.format(point.balance - point.deposits), euro.format(point.balance)];
+        for (const value of values) {
+          const td = document.createElement('td');
+          td.textContent = value;
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+    }
+    function calculate() {
+      const result = readValues();
+      if (result.error) return clearResults(result.error);
+      const {initial, monthly, rate} = result.data;
+      const months = result.months;
+      const monthlyRate = rate / 1200;
+      let balance = initial;
+      let deposits = initial;
+      const points = [{month: 0, balance, deposits}];
+      for (let m = 1; m <= months; m++) {
+        balance = balance * (1 + monthlyRate) + monthly;
+        deposits += monthly;
+        if (m % 12 === 0 || m === months) points.push({month: m, balance, deposits});
+      }
+      if (!Number.isFinite(balance) || !Number.isFinite(deposits)) return clearResults('Ο υπολογισμός δεν είναι δυνατός με αυτές τις τιμές.');
+      $('error').textContent = '';
+      showResult('total', balance);
+      showResult('deposits', deposits);
+      showResult('interest', balance - deposits);
+      showResult('months', months, 'count');
+      drawChart(points, months);
+      fillTable(points);
+    }
+    for (const id of ids) $(id).addEventListener('input', calculate);
+    $('reset-example').addEventListener('click', function () {
+      const defaults = {initial: '500', monthly: '100', years: '5', rate: '2'};
+      for (const id of ids) $(id).value = defaults[id];
+      calculate();
+      $('initial').focus();
+    });
+    calculate();
+  })();
+  </script>
+</body>
+</html>
